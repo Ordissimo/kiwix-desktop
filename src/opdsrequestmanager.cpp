@@ -1,4 +1,5 @@
 #include "opdsrequestmanager.h"
+#include "kiwixapp.h"
 
 OpdsRequestManager::OpdsRequestManager()
 : mp_reply(nullptr)
@@ -14,9 +15,24 @@ void OpdsRequestManager::doUpdate(const QString& currentLanguage, const QString&
         query.addQueryItem("lang", currentLanguage);
     }
     query.addQueryItem("count", QString::number(0));
-    if (categoryFilter != "all") {
+    if (categoryFilter != "all" && categoryFilter != "other") {
         query.addQueryItem("tag", categoryFilter);
     }
+
+    if (categoryFilter == "other") {
+        auto categoryList = KiwixApp::instance()->getMainWindow()->getSideContentManager()->getCategoryList();
+        for (auto& category:categoryList) {
+            if (category == "Other") {
+                categoryList.removeOne(category);
+            }
+            category = category.toLower();
+        }
+        QString excludeTags;
+        excludeTags = categoryList.join(";");
+        query.addQueryItem("notag", excludeTags);
+    }
+
+
     QUrl url;
     url.setScheme("http");
     url.setHost(CATALOG_HOST);
